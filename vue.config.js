@@ -1,5 +1,5 @@
 module.exports = {
-  "publicPath": "PlaceableItems-Wiki",
+  "publicPath": "/PlaceableItems-Wiki/",
   "transpileDependencies": [
     "vuetify"
   ]
