@@ -62,6 +62,7 @@
             dialog(newVal, old_val) {
               if(!newVal) {
                   this.$refs.viewer.innerHTML = '';
+                  delete this.mv;
                   window.removeEventListener('resize', this.onResize);
               }
             }

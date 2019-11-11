@@ -1,14 +1,17 @@
 <template>
-  <v-app>
-    <v-sheet class="d-flex flex-column align-center justify-center">
-      <v-parallax src="./assets/header.jpg" class="parallax">
-        <v-img src="./assets/logo.png" class="logo" contain></v-img>
-      </v-parallax>
-      <v-sheet class="pa-7 white" width="100%" max-width="1300px">
-          <item v-for="item in meta" :key="item.itemName" :item="item"></item>
+  <v-fade-transition>
+    <v-app class="d-flex align-center" v-if="meta">
+      <v-sheet class="d-flex flex-column align-center justify-center">
+        <v-parallax src="./assets/header.jpg" class="parallax">
+          <v-img src="./assets/logo.png" class="logo" contain></v-img>
+        </v-parallax>
+        <v-container class="pa-7 white list-container">
+            <v-text-field label="Search" v-model="searchQuery" append-icon="mdi-magnify" class="px-3 py-5"></v-text-field>
+            <item v-for="item in getSearchedItems()" :key="item.itemName" :item="item"></item>
+        </v-container>
       </v-sheet>
-    </v-sheet>
-  </v-app>
+    </v-app>
+  </v-fade-transition>
 </template>
 
 <script>
@@ -23,7 +26,8 @@
 
     data: () => ({
       metaURL: 'https://raw.githubusercontent.com/Ferdzz/PlaceableItems/1.14.3/wiki/data.json',
-      meta: null
+      meta: null,
+      searchQuery: ''
     }),
 
     mounted() {
@@ -36,6 +40,17 @@
       getMetadata() {
         return this.axios.get(this.metaURL);
       },
+      getSearchedItems() {
+        if(this.searchQuery.trim().length > 0) {
+          return this.meta.filter(i => {
+            if(i.itemName.toLowerCase().includes(this.searchQuery.toLowerCase().trim())) return true;
+            if('description' in i && i.description.toLowerCase().includes(this.searchQuery.toLowerCase().trim())) return true;
+            return false;
+          });
+        } else {
+          return this.meta;
+        }
+      }
     }
   };
 </script>
@@ -50,6 +65,11 @@
 
   .parallax {
       max-width: 100%;
+  }
+
+  .list-container {
+    max-width: 1000px;
+    width: 100%;
   }
 
   ::v-deep .v-parallax__image-container {
