@@ -21,7 +21,7 @@ export function ModelViewer(container, dimension = null, position = null, target
   // element
 
   this.element = document.createElement('div')
-  this.element.setAttribute('style', 'position: absolute; top: 0; bottom: 0; left: 0; right: 0; width: auto; height: auto; overflow: hidden;')
+  this.element.setAttribute('style', 'width: auto; height: auto; overflow: hidden;')
 
   this.container.appendChild(this.element)
 
@@ -121,9 +121,11 @@ export function ModelViewer(container, dimension = null, position = null, target
 
   // resize
 
-  this.resize = function() {
+  this.resize = function(newSize = null) {
     if(self.dimension == null)
       var rect = self.element.getBoundingClientRect()
+    else if(newSize != null)
+      var rect = self.dimension = newSize
     else
       var rect = self.dimension
 
