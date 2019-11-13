@@ -402,11 +402,7 @@ export function JsonModel(name, rawModel, texturesReference, clipUVs) {
 
   // parse model or throw an error if parsing fails
 
-  try {
-    var model = JSON.parse(rawModel)
-  } catch (e) {
-    throw new Error('Couldn\'t parse json model. ' + e.message + '.')
-  }
+  var model = rawModel
 
 
   // get textures and handle animated textures
@@ -443,88 +439,89 @@ export function JsonModel(name, rawModel, texturesReference, clipUVs) {
         if (reference.hasOwnProperty('mcmeta')) {
 
           // parse mcmeta
-          try {
-            var mcmeta = JSON.parse(reference.mcmeta)
-          } catch (e) {
-            throw new Error('Couldn\'t parse mcmeta for texture "' + textureName + '". ' + e.message + '.')
-          }
+          var mcmeta = reference.mcmeta
 
           // check property
           if (!mcmeta.hasOwnProperty('animation'))
             throw new Error('Couldn\'t find the "animation" property in mcmeta for texture "' + textureName + '"')
 
           // image buffer to access width and height from dataURL
-          var imageBuffer = new Image()
-          imageBuffer.crossOrigin="Anonymous"
-          imageBuffer.src = reference.texture
+          var imageBuffer = reference.texture
 
-          imageBuffer.addEventListener('load', _ => {
-            var width = imageBuffer.width
-            var height = imageBuffer.height
+          var width = imageBuffer.width
+          var height = imageBuffer.height
 
-            // check if dimensions are valid
-            if (height % width != 0)
-              throw new Error('Image dimensions are invalid for texture "' + textureName + '".')
+          // check if dimensions are valid
+          if (height % width != 0)
+            throw new Error('Image dimensions are invalid for texture "' + textureName + '".')
 
-            // get frames from mcmeta or generate them
-            var frames = []
+          // get frames from mcmeta or generate them
+          var frames = []
 
-            if (mcmeta.animation.hasOwnProperty('frames')) {
-              frames = mcmeta.animation.frames
+          if (mcmeta.animation.hasOwnProperty('frames')) {
+            frames = mcmeta.animation.frames
+          } else {
+            for (var k = 0; k < height/width; k++) {
+              frames.push(k)
+            }
+          }
+
+          // default value for frametime
+          var frametime = mcmeta.animation.frametime || 1
+
+          // uniform animation frames
+          var animation = []
+
+          for (var i = 0; i < frames.length; i++) {
+            let frame = frames[i]
+            if (typeof frame == 'number') {
+              animation.push({index: frame, time: frametime})
             } else {
-              for (var k = 0; k < height/width; k++) {
-                frames.push(k)
-              }
+              if (!frame.hasOwnProperty('index'))
+                throw new Error('Invalid animation frame at index "' + i + '" in mcmeta for texture "' + textureName + '".')
+              animation.push({index: frame.index, time: frame.time || frametime})
             }
+          }
 
-            // default value for frametime
-            var frametime = mcmeta.animation.frametime || 1
+          // number of vertical frames
+          var numberOfImages = height/width
 
-            // uniform animation frames
-            var animation = []
+          // register animation
+          animations.push({height: numberOfImages, frames: animation, currentFrame: 0})
+          animated.push(references.length - 1)
 
-            for (var i = 0; i < frames.length; i++) {
-              let frame = frames[i]
-              if (typeof frame == 'number') {
-                animation.push({index: frame, time:frametime})
-              } else {
-                if (!frame.hasOwnProperty('index'))
-                  throw new Error('Invalid animation frame at index "' + i + '" in mcmeta for texture "' + textureName + '".')
-                animation.push({index: frame.index, time: frame.time || frametime})
-              }
-            }
+          // split frames
+          var images = []
 
-            // number of vertical frames
-            var numberOfImages = height/width
+          for (var i = 0; i < height/width; i++) {
 
-            // register animation
-            animations.push({height: numberOfImages, frames: animation, currentFrame: 0})
-            animated.push(references.length - 1)
+            // workspace
+            var canvas = document.createElement('canvas')
+            canvas.width = width
+            canvas.height = width
 
-            // split frames
-            var images = []
+            var ctx = canvas.getContext('2d')
+            ctx.drawImage(imageBuffer, 0, -i*width)
 
-            for (var i = 0; i < height/width; i++) {
+            images.push(canvas.toDataURL('image/png'))
+          }
 
-              // workspace
-              var canvas = document.createElement('canvas')
-              canvas.width = width
-              canvas.height = width
-
-              var ctx = canvas.getContext('2d')
-              ctx.drawImage(imageBuffer, 0, -i*width)
-
-              images.push(canvas.toDataURL('image/png'))
-            }
-
-            // register textures
-            textures[key] = images
-          });
+          // register textures
+          textures[key] = images
 
         } else {
+          var imageBuffer = reference.texture
+          var width = imageBuffer.width
+          var height = imageBuffer.height
 
+          var canvas = document.createElement('canvas')
+          canvas.width = width
+          canvas.height = width
+
+          var ctx = canvas.getContext('2d')
+          ctx.drawImage(imageBuffer, 0, -i*width)
           // register texture
-          textures[key] = reference.texture
+          textures[key] = canvas.toDataURL('image/png')
 
         }
 
@@ -554,7 +551,6 @@ export function JsonModel(name, rawModel, texturesReference, clipUVs) {
 
   // final material is made of several different materials, one for each texture
   references.forEach(function(ref, index) {
-
     // if animated texture, get the first frame
     var image = textures[ref] instanceof Array ? textures[ref][0] : textures[ref]
 
@@ -563,11 +559,15 @@ export function JsonModel(name, rawModel, texturesReference, clipUVs) {
     var texture = loader.load(image)
 
     // sharp pixels and smooth edges
+    texture.anisotropy = 0
     texture.magFilter = THREE.NearestFilter
-    texture.minFilter = THREE.LinearFilter
+    texture.minFilter = THREE.NearestFilter
 
     // map texture to material, keep transparency and fix transparent z-fighting
     var mat = new THREE.MeshLambertMaterial({map: texture, transparent: true, alphaTest: 0.5})
+    mat.blending = THREE.CustomBlending
+    mat.blendSrc = THREE.OneFactor
+    mat.blendDst = THREE.OneMinusSrcAlphaFactor
 
     materials.push(mat)
 
@@ -587,11 +587,10 @@ export function JsonModel(name, rawModel, texturesReference, clipUVs) {
           var frame = animation.frames[animation.currentFrame]
 
           // Prevent crashing with big animated textures
-          try {
+          if(material.map.image) {
             material.map.image.src = images[frame.index]
             animation.currentFrame = animation.currentFrame < animation.frames.length - 1 ? animation.currentFrame + 1 : 0
-          } catch (e) {
-            console.log(e.message)
+            material.map.needsUpdate = true
           }
 
           window.setTimeout(function() {

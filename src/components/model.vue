@@ -8,7 +8,10 @@
                 <v-card width="100%">
                     <v-card-title>{{item.itemName}}</v-card-title>
                     <v-card-text class="px-0 pb-6">
-                            <div ref="viewer" class="viewer"></div>
+                            <div v-show="loaded" ref="viewer" class="viewer"></div>
+                            <v-sheet v-if="size && !loaded" :width="size + 'px'" :height="size + 'px'" class="loder-viewer d-flex justify-center align-center">
+                                <v-progress-circular color="primary" indeterminate></v-progress-circular>
+                            </v-sheet>
                     </v-card-text>
                 </v-card>
             </v-lazy>
@@ -17,7 +20,8 @@
 </template>
 
 <script>
-    import {ModelViewer, JsonModel} from '../assets/mc-model-viewer'
+    import {ModelViewer, JsonModel as JM} from '../assets/mc-model-viewer'
+    import {JsonModel} from './minecraft/JsonModel'
 
     export default {
         name: "model",
@@ -30,6 +34,8 @@
                 mv: null,
                 resizeCB: null,
                 viewer: null,
+                loaded: null,
+                size: null,
                 baseURL: 'https://raw.githubusercontent.com/Ferdzz/PlaceableItems/1.14.3/Forge/src/main/resources/assets/placeableitems/'
             }
         },
@@ -38,18 +44,18 @@
             this.dialog = true;
             setTimeout(_ => {
                 this.viewer = this.$refs.viewer;
-                let size = this.viewer.parentElement.clientWidth;
+                this.size = this.viewer.parentElement.clientWidth;
 
-                this.mv = new ModelViewer(this.viewer, {width: size, height: size}, {x: 9, y: 9, z: 18}, {x: 0, y: -4, z: 0});
+                this.mv = new ModelViewer(this.viewer, {width: this.size, height: this.size}, {x: 9, y: 9, z: 18}, {x: 0, y: -6, z: 0});
                 this.resizeCB = window.addEventListener('resize', this.onResize);
 
-                let promises = [this.axios.get(this.baseURL + this.item.modelPath)];
-
-                Promise.all(promises.map(p => p.catch(e => e))).then(values => {
-                    let textures = this.item.textures.map(t => { return {name: t.name, texture: this.baseURL + t.texture} });
-                    this.mv.load(new JsonModel(this.item.itemName, JSON.stringify(values[0].data), textures));
+                let modelName = this.item.modelPath.split('/').slice(-1)[0].split('.')[0];
+                new JsonModel(modelName, this.axios, data => {
+                    console.log(data);
+                    this.mv.load(new JM(modelName, data.model, data.textures));
+                    this.loaded = true;
                 });
-            }, 100);
+            }, 50);
           },
           onResize() {
               if(this.viewer) {
@@ -61,6 +67,8 @@
         watch: {
             dialog(newVal, old_val) {
               if(!newVal) {
+                  this.mv.removeAll();
+                  this.mv.renderer.dispose();
                   this.$refs.viewer.innerHTML = '';
                   delete this.mv;
                   window.removeEventListener('resize', this.onResize);
@@ -77,5 +85,8 @@
         ::v-deep canvas:focus {
             outline: none;
         }
+    }
+    .loder-viewer {
+
     }
 </style>
