@@ -2,8 +2,8 @@
   <v-fade-transition>
     <v-app class="d-flex align-center" v-show="loaded">
       <v-sheet class="d-flex flex-column align-center justify-center">
-        <v-parallax src="./assets/header.jpg" class="parallax">
-          <v-img src="./assets/logo.png" class="logo" contain></v-img>
+        <v-parallax src="./assets/header.png" class="parallax">
+          <v-img src="./assets/logo.png" class="logo"></v-img>
         </v-parallax>
         <v-container class="pa-7 white list-container" v-if="meta">
             <v-text-field label="Search" v-model="searchQuery" append-icon="mdi-magnify" class="px-3 py-5"></v-text-field>
@@ -60,13 +60,19 @@
 <style scoped lang="scss">
   .logo {
       max-height: 70%;
-      .v-image__image {
+      position: relative;
+      ::v-deep .v-image__image {
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        max-width: 1000px !important;
         background-size: contain !important;
       }
   }
 
   .parallax {
       width: 100%;
+      background-color: #59E2FF;
   }
 
   .list-container {
