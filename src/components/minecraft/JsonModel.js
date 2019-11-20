@@ -2,15 +2,15 @@
 const prob = require('probe-image-size');
 
 export class JsonModel {
-    constructor(model, axios, onLoaded) {
+    constructor(model, item, axios, onLoaded) {
         this.baseURL = 'https://raw.githubusercontent.com/Ferdzz/PlaceableItems/1.14.3/Forge/src/main/resources/assets/placeableitems/';
         this.axios = axios;
-        this.fetchModel(model).then(data => {
+        this.fetchModel(model, item).then(data => {
             onLoaded(data);
         });
     }
 
-    fetchModel(model, child = null) {
+    fetchModel(model, item, child = null) {
         return Promise.all([
             this.axios.get(this.baseURL + 'models/block/' + model + '.json').then(model => {
                 model = model.data;
@@ -24,10 +24,10 @@ export class JsonModel {
                 if('credit' in model) delete model.credit;
                 if('parent' in model) {
                     let parentModel = model.parent.split('/').slice(-1)[0];
-                    return this.fetchModel(parentModel, model);
+                    return this.fetchModel(parentModel, item, model);
                 }
 
-                return this.fetchTextures(model);
+                return this.fetchTextures(model, item.textures);
             })
         ]).then(values => {
             let textures = [];
@@ -44,13 +44,12 @@ export class JsonModel {
         });
     }
 
-    fetchTextures(model) {
-        let promises = Object.entries(model.textures).map(t => {
-            let textureName = t[1].split('/').slice(-1)[0];
+    fetchTextures(model, textures) {
+        let promises = textures.map(t => {
             return [
-                textureName,
-                this.loadImage(this.baseURL + 'textures/block/' + textureName + '.png').catch(e => e),
-                this.axios.get(this.baseURL + 'textures/block/' + textureName + '.png.mcmeta').catch(e => e)
+                t.name,
+                this.loadImage(this.baseURL + t.texture).catch(e => e),
+                this.axios.get(this.baseURL + t.texture + '.mcmeta').catch(e => e)
             ]
         });
         let flatPromises = promises.reduce((e1, e2) => e1.concat(e2));
