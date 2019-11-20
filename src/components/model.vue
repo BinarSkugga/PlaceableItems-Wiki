@@ -20,7 +20,7 @@
 </template>
 
 <script>
-    import {ModelViewer, JsonModel as JM} from '../assets/mc-model-viewer'
+    import {ModelViewer, JsonModel as JM} from './minecraft/mc-model-viewer'
     import {JsonModel} from './minecraft/JsonModel'
 
     export default {

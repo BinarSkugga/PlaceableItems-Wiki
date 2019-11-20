@@ -14,7 +14,7 @@
 </template>
 
 <script>
-    import {ModelViewer, JsonModel} from '../assets/mc-model-viewer'
+    import {ModelViewer, JsonModel} from './minecraft/mc-model-viewer'
     import model from './model'
 
     export default {
