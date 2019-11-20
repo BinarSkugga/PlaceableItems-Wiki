@@ -2,17 +2,17 @@
 const prob = require('probe-image-size');
 
 export class JsonModel {
-    constructor(model, item, axios, onLoaded) {
+    constructor(item, axios, onLoaded) {
         this.baseURL = 'https://raw.githubusercontent.com/Ferdzz/PlaceableItems/1.14.3/Forge/src/main/resources/assets/placeableitems/';
         this.axios = axios;
-        this.fetchModel(model, item).then(data => {
+        this.fetchModel(item).then(data => {
             onLoaded(data);
         });
     }
 
-    fetchModel(model, item, child = null) {
+    fetchModel(item, child = null) {
         return Promise.all([
-            this.axios.get(this.baseURL + 'models/block/' + model + '.json').then(model => {
+            this.axios.get(this.baseURL + item.modelPath).then(model => {
                 model = model.data;
 
                 if(child !== null)
