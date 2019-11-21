@@ -1,5 +1,4 @@
 "use strict";
-const prob = require('probe-image-size');
 
 export class JsonModel {
     constructor(item, axios, onLoaded) {

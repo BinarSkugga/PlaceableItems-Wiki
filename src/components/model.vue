@@ -50,9 +50,11 @@
                 this.resizeCB = window.addEventListener('resize', this.onResize);
 
                 let modelName = this.item.modelPath.split('/').slice(-1)[0].split('.')[0];
+
                 new JsonModel(this.item, this.axios, data => {
                     this.mv.load(new JM(modelName, data.model, data.textures));
                     this.loaded = true;
+                    this.$ga.event('model', 'click', modelName);
                 });
             }, 50);
           },
