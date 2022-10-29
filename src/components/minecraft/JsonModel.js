@@ -2,7 +2,7 @@
 
 export class JsonModel {
     constructor(item, axios, onLoaded) {
-        this.baseURL = 'https://raw.githubusercontent.com/Ferdzz/PlaceableItems/1.14.3/Forge/src/main/resources/assets/placeableitems/';
+        this.baseURL = 'https://raw.githubusercontent.com/Ferdzz/PlaceableItems/master/Forge/src/main/resources/assets/placeableitems/';
         this.axios = axios;
         this.fetchModel(item).then(data => {
             onLoaded(data);

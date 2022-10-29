@@ -36,7 +36,7 @@
                 viewer: null,
                 loaded: null,
                 size: null,
-                baseURL: 'https://raw.githubusercontent.com/Ferdzz/PlaceableItems/1.14.3/Forge/src/main/resources/assets/placeableitems/'
+                baseURL: 'https://raw.githubusercontent.com/Ferdzz/PlaceableItems/master/Forge/src/main/resources/assets/placeableitems/'
             }
         },
         methods: {

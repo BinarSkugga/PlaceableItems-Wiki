@@ -47,7 +47,7 @@
     },
 
     data: () => ({
-      metaURL: 'https://raw.githubusercontent.com/Ferdzz/PlaceableItems/1.14.3/wiki/data.json',
+      metaURL: 'https://raw.githubusercontent.com/Ferdzz/PlaceableItems/master/wiki/data.json',
       meta: null,
       searchQuery: '',
       loaded: null,
